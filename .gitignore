@@ -65,3 +65,9 @@ Icon[]
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# CMake junk
+sputnik_test.dSYM/
+src/build/*
+# exclude the binary
+sputnik_test

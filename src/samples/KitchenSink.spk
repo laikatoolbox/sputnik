@@ -1,0 +1,138 @@
+; keys not under a section are under the default :root section
+keyatroot=abc
+
+; keys with no = are equal to an empty string 
+key1
+
+; keys with an = are equal to everything after the =
+key2=value
+
+; keys that start with * are arrays whose values are separated by ;
+*pet types=dog;cat;bird
+
+; I'm a comment. Everything after a line that starts with ; is ignored
+   ; this includes lines with whitespace at the start, like this line
+
+; empty (after trimming all whitespace) lines are just skipped
+
+; sections are started with : and every line after until the next
+; section definition starting with : or the end of the file is part 
+; of the section
+:layer1
+name=I'm layer 1
+
+:layer2
+name=I'm another layer!
+
+; sections that are duplicated are merged together
+; duplicate keys in a section a set in the order they are defined:
+; whatever value is last is the value that is set
+:layer1
+name=I'm the new layer name. Different from the value above
+color=red
+
+; objects are essentially the same as sections, but allow duplicates
+; with the same name
+@circle
+x=0
+y=10
+width=100
+height=100
+fill=black
+
+@circle
+x=90
+y=90
+width=100
+height=100
+
+; by default, everything is in the "root" sector if a sector is not defined
+; sectors are defined with a ">", with everything to the left of the ">"
+; being the sector name
+
+; a point in another sector called "sector 2"
+@sector 2>point
+x=10
+y=10
+
+; points in the root sector defined in 2 different ways:
+; explicitly and implicitly with "root>". this makes no difference
+; for the actual parsing of the data
+@root>point
+x=10
+y=10
+
+@point
+x=10
+y=10
+
+; the same sector rules apply with sections as well
+:sector 2>favorites
+color=blue
+
+:root>favorites
+color=blue
+
+:favorites
+color=blue
+
+; ----------
+; ESCAPE CHARACTERS
+; Sputnik uses the characters:
+; :, =, ;, \r, \n, $, @, >, <
+; The escape characters for these are, respectively:
+; $cl, $eq, $sc, $r, $n, $dl, $at, :gt:, :lt:
+; :lt: isn't really needed right now, but it's included for balance with :gt:, which is needed
+; When getting and setting values using the reference C++
+; implementation, these should automatically be encoded and decoded.
+
+; EXAMPLE
+
+; An object named "colons:for:some:reason" with a key named "test" with an array with values "e=mc^2" and "a;b;c\nd;e"
+@colons$clfor$clsome$clreason
+test=e$eqmc^2;a$scb$scc$nd$sce
+
+; An object with a multi-line value with multiple reserved characters being used
+@textbox
+text=I'm a multi-line text box!$nLine 2$nLine 3.$nMy email is: test@example.com
+
+; NOTES
+; There are some cases where escape characters are not needed because the character
+; they represent has no effect in that area:
+
+;   @ $at is only required for the beginning of a line, since @ at the beginning of a line
+;     marks an object. The symbol is ignored elsewhere. So this will be parsed as 
+;     "@example.com account name=test"
+$atexample.com account name=test
+; No escape needed in this case though:
+email=test@example.com
+
+;   = is ignored in section and object names, since it only is used to separate key and value.
+;     So this is a valid section and object:
+:p=np
+@a+b=c
+
+;   ; only matters in values and at the start of lines, since it separates array values and
+      a comment when at the start of a line. It doesn't matter elsewhere.
+;   These are valid objects, sections, and keys:
+@a;b;c
+key;with;semicolons=value
+
+:section; alas
+key; with semicolon=array object 1;array object 2
+
+;   : is ignored in key/value lines except for at the start, since it is only used at the beginning
+;     of lines to mark a section
+; So this is valid:
+:section
+key:with:colons=value:with:colons
+
+; > is ignored everywhere except for in object and section names since it marks the sector of that object or section
+; So this is valid:
+1>2=false
+2>1=true
+; escaped in object name:
+@:lt:div:gt:
+inner text=I'm inside a <div>!
+
+; ----------
