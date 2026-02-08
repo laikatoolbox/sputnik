@@ -7,9 +7,6 @@ key1
 ; keys with an = are equal to everything after the =
 key2=value
 
-; keys that start with * are arrays whose values are separated by ;
-*pet types=dog;cat;bird
-
 ; I'm a comment. Everything after a line that starts with ; is ignored
    ; this includes lines with whitespace at the start, like this line
 
