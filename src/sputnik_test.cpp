@@ -41,7 +41,10 @@ void testKitchenSink() {
     Sputnik::File *spkFile = new Sputnik::File();
     Sputnik::ParseStatus spkStatus = spkFile->parseFile("../samples/KitchenSink.spk");
 
-    // File parse successfully
+    // sanity test: uncomment this and it should fail
+    //assert(false);
+
+    // File parsed successfully
     assert(spkStatus.success);
 
     // We should only have 2 sectors:
@@ -72,9 +75,9 @@ void testKitchenSink() {
     assert(valueWithEscapedCharactersNewLine == ";");
     assert(valueWithEscapedCharactersDollar == "\r\n@\r\n");
 
-    // sanity test: uncomment this and it should fail
-    //assert(false);
-    
+    // Test objects
+    auto circles = spkFile->objectsNamed("circle");
+
     std::cout << "Kitchen sink test passed" << std::endl;
 }
 

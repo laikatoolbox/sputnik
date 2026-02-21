@@ -8,6 +8,13 @@
 #ifndef SPUTNIK_H
 #define SPUTNIK_H
 
+// I do not feel like typing this nonsense out a bunch of times, so define a macro for it
+// This is for the values returned by equal_range() on Sector::objects
+#define SPUTNIK_OBJECT_ITERATOR std::pair< \
+            std::multimap<std::string, std::map<std::string, std::string>>::iterator,  \
+            std::multimap<std::string, std::map<std::string, std::string>>::iterator \
+        >
+
 namespace Sputnik
 {
     /// @brief A set of values and objects related to each other.
@@ -24,7 +31,8 @@ namespace Sputnik
         std::map<std::string, std::map<std::string, std::string>> sections;
         std::multimap<std::string, std::map<std::string, std::string>> objects;
 
-        std::map<std::string, std::string> &section(std::string sectionName);
+        std::map<std::string, std::string>& sectionNamed(std::string sectionName);
+        SPUTNIK_OBJECT_ITERATOR objectsNamed(std::string objectName);
     };
 
     struct ParseStatus
@@ -58,6 +66,8 @@ namespace Sputnik
 
         std::string value(std::string key, std::string section, std::string sector);
         std::vector<std::string_view> valueAsArray(std::string key, std::string section, std::string sector);
+
+        SPUTNIK_OBJECT_ITERATOR objectsNamed(std::string key, std::string section, std::string sector);
     };
 
     enum class LineState
@@ -141,9 +151,14 @@ Sputnik::Sector::~Sector()
 {
 }
 
-std::map<std::string, std::string> &Sputnik::Sector::section(std::string sectionName)
+std::map<std::string, std::string>& Sputnik::Sector::sectionNamed(std::string sectionName)
 {
     return this->sections[sectionName];
+}
+
+SPUTNIK_OBJECT_ITERATOR Sputnik::Sector::objectsNamed(std::string objectName) 
+{
+    return this->objects.equal_range(objectName);
 }
 
 // FILE
@@ -241,7 +256,7 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
                 else
                 { // object specific logic
                     lineState = Sputnik::LineState::InObject;
-                    
+
                     // create a new object and append it
                     std::map<std::string, std::string> object = {};
                     sector->objects.emplace(sectionOrObjectName, object);
@@ -288,7 +303,7 @@ Sputnik::Sector &Sputnik::File::sector(std::string key)
 std::string Sputnik::File::value(std::string key, std::string section = "root", std::string sector = "root")
 {
     Sputnik::Sector &foundSector = this->sector(sector);
-    std::map<std::string, std::string> &foundSection = foundSector.section(section);
+    std::map<std::string, std::string> &foundSection = foundSector.sectionNamed(section);
     return foundSection[key];
 }
 
@@ -296,5 +311,12 @@ std::vector<std::string_view> Sputnik::File::valueAsArray(std::string key, std::
 {
     std::string value = this->value(sector, key);
     return Sputnik::splitString(value, ';');
+}
+
+SPUTNIK_OBJECT_ITERATOR Sputnik::File::objectsNamed(std::string key, std::string section = "root", std::string sector = "root") 
+{
+    Sputnik::Sector &foundSector = this->sector(sector);
+    SPUTNIK_OBJECT_ITERATOR objectIterator = foundSector.objectsNamed(key);
+    return objectIterator;
 }
 #endif
