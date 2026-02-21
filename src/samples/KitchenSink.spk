@@ -68,18 +68,24 @@ y=10
 color=blue
 
 :root>favorites
-color=blue
+color=green
+animal=cat
+
+; break up this section with another in the middle
+:sector 2>some section
+key=value
 
 :favorites
-color=blue
+color=red
+food=pizza
 
 ; ----------
 ; ESCAPE CHARACTERS
 ; Sputnik uses the characters:
-; :, =, ;, \r, \n, $, @, >, <
+; :, =, ;, \r, \n, @, >, <, $
 ; The escape characters for these are, respectively:
-; $cl, $eq, $sc, $r, $n, $dl, $at, :gt:, :lt:
-; :lt: isn't really needed right now, but it's included for balance with :gt:, which is needed
+; $cl, $eq, $sc, $r, $n, $at, $gt, $lt, $dl
+; $lt isn't really needed right now, but it's included for balance with :gt:, which is needed
 ; When getting and setting values using the reference C++
 ; implementation, these should automatically be encoded and decoded.
 

@@ -69,5 +69,7 @@ Temporary Items
 # CMake junk
 sputnik_test.dSYM/
 src/build/*
+build/*
+
 # exclude the binary
 sputnik_test
