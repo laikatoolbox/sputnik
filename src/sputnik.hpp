@@ -217,6 +217,11 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
                     sectorName = std::string(sectorSplit[0]);
                     sectionOrObjectName = std::string(sectorSplit[1]);
                 }
+
+                // desanitize the names
+                Sputnik::desanitize(sectorName);
+                Sputnik::desanitize(sectionOrObjectName);
+
                 Sputnik::Sector *sector = &(this->sectors[sectorName]);
 
                 // Logic that differs between sections and objects
@@ -236,6 +241,7 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
                 else
                 { // object specific logic
                     lineState = Sputnik::LineState::InObject;
+                    
                     // create a new object and append it
                     std::map<std::string, std::string> object = {};
                     sector->objects.emplace(sectionOrObjectName, object);
@@ -247,8 +253,6 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
                     lineState = Sputnik::LineState::AtRoot;
                     currentSectionOrObject = this->rootOfRoot();
                 }
-
-                std::cout << sectionOrObjectName << std::endl;
             }
             else if (line.starts_with(';'))
             { // comment
@@ -261,7 +265,11 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
                 std::string key = std::string(kvSplit[0]);
                 std::string value = std::string(kvSplit[1]);
 
-                // assign it
+                // desanitize them
+                Sputnik::desanitize(key);
+                Sputnik::desanitize(value);
+
+                // assign key=value 
                 (*currentSectionOrObject)[key] = value;
             }
         }

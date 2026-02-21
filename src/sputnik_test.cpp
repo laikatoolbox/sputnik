@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
 #include <assert.h>
-#include "sputnik.hpp"
 
+#include "sputnik.hpp"
 
 void printSplit(std::string title, std::string text, char delimeter) {
     std::vector<std::string_view> splits = Sputnik::splitString(text, delimeter);
@@ -39,7 +39,7 @@ void testKitchenSink() {
     std::cout << "Test reading a file named \"KitchenSink.spk\"" << std::endl;
 
     Sputnik::File *spkFile = new Sputnik::File();
-    Sputnik::ParseStatus spkStatus = spkFile->parseFile("samples/KitchenSink.spk");
+    Sputnik::ParseStatus spkStatus = spkFile->parseFile("../samples/KitchenSink.spk");
 
     // File parse successfully
     assert(spkStatus.success);
@@ -65,9 +65,15 @@ void testKitchenSink() {
     std::string rootFavoriteFood = spkFile->value("food", "favorites");
     assert(rootFavoriteAnimal == "cat");
     assert(rootFavoriteFood == "pizza");
+    
+    // Test that section and sector names are desanitized correctly
+    std::string valueWithEscapedCharactersNewLine = spkFile->value("\n", ":>;@");
+    std::string valueWithEscapedCharactersDollar = spkFile->value("$@", ":>;@");    
+    assert(valueWithEscapedCharactersNewLine == ";");
+    assert(valueWithEscapedCharactersDollar == "\r\n@\r\n");
 
     // sanity test: uncomment this and it should fail
-    //assert(rootFavoriteFood == "hotdog");
+    //assert(false);
     
     std::cout << "Kitchen sink test passed" << std::endl;
 }
