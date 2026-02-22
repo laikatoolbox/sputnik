@@ -8,13 +8,6 @@
 #ifndef SPUTNIK_H
 #define SPUTNIK_H
 
-// I do not feel like typing this nonsense out a bunch of times, so define a macro for it
-// This is for the values returned by equal_range() on Sector::objects
-#define SPUTNIK_OBJECT_ITERATOR std::pair< \
-            std::multimap<std::string, std::map<std::string, std::string>>::iterator,  \
-            std::multimap<std::string, std::map<std::string, std::string>>::iterator \
-        >
-
 namespace Sputnik
 {
     /// @brief A set of values and objects related to each other.
@@ -31,8 +24,8 @@ namespace Sputnik
         std::map<std::string, std::map<std::string, std::string>> sections;
         std::multimap<std::string, std::map<std::string, std::string>> objects;
 
-        std::map<std::string, std::string>& sectionNamed(std::string sectionName);
-        SPUTNIK_OBJECT_ITERATOR objectsNamed(std::string objectName);
+        std::map<std::string, std::string> &sectionNamed(std::string sectionName);
+        std::vector<std::map<std::string, std::string>> objectsNamed(std::string objectName);
     };
 
     struct ParseStatus
@@ -67,7 +60,7 @@ namespace Sputnik
         std::string value(std::string key, std::string section, std::string sector);
         std::vector<std::string_view> valueAsArray(std::string key, std::string section, std::string sector);
 
-        SPUTNIK_OBJECT_ITERATOR objectsNamed(std::string key, std::string section, std::string sector);
+        std::vector<std::map<std::string, std::string>> objectsNamed(std::string key, std::string section, std::string sector);
     };
 
     enum class LineState
@@ -78,40 +71,46 @@ namespace Sputnik
     };
 
     std::vector<std::string_view> splitString(std::string_view text, char delimeter);
-    void replaceAll(std::string& subject, const std::string& search, const std::string& replace);
-    void sanitize(std::string& text);
-    void desanitize(std::string& text);
+    void replaceAll(std::string &subject, const std::string &search, const std::string &replace);
+    void sanitize(std::string &text);
+    void desanitize(std::string &text);
 }
 
 // String ops
-std::vector<std::string_view> Sputnik::splitString(std::string_view text, char delimeter) {
+std::vector<std::string_view> Sputnik::splitString(std::string_view text, char delimeter)
+{
     std::vector<std::string_view> result;
     auto left = text.begin();
 
-    for (auto it = left; it != text.end(); ++it) {
-        if (*it == delimeter) {
+    for (auto it = left; it != text.end(); ++it)
+    {
+        if (*it == delimeter)
+        {
             result.emplace_back(&*left, it - left);
             left = it + 1;
         }
     }
 
-    if (left != text.end()) {
+    if (left != text.end())
+    {
         result.emplace_back(&*left, text.end() - left);
     }
 
     return result;
 }
 
-void Sputnik::replaceAll(std::string& subject, const std::string& search, const std::string& replace) {
+void Sputnik::replaceAll(std::string &subject, const std::string &search, const std::string &replace)
+{
     size_t pos = 0;
-    while ((pos = subject.find(search, pos)) != std::string::npos) {
-         subject.replace(pos, search.length(), replace);
-         pos += replace.length();
+    while ((pos = subject.find(search, pos)) != std::string::npos)
+    {
+        subject.replace(pos, search.length(), replace);
+        pos += replace.length();
     }
 }
 
-
-void Sputnik::sanitize(std::string& text) {
+void Sputnik::sanitize(std::string &text)
+{
     Sputnik::replaceAll(text, "$", "$dl");
     Sputnik::replaceAll(text, ":", "$cl");
     Sputnik::replaceAll(text, "=", "$eq");
@@ -123,7 +122,8 @@ void Sputnik::sanitize(std::string& text) {
     Sputnik::replaceAll(text, "<", "$lt");
 }
 
-void Sputnik::desanitize(std::string& text) {    
+void Sputnik::desanitize(std::string &text)
+{
     Sputnik::replaceAll(text, "$cl", ":");
     Sputnik::replaceAll(text, "$eq", "=");
     Sputnik::replaceAll(text, "$sc", ";");
@@ -151,14 +151,21 @@ Sputnik::Sector::~Sector()
 {
 }
 
-std::map<std::string, std::string>& Sputnik::Sector::sectionNamed(std::string sectionName)
+std::map<std::string, std::string> &Sputnik::Sector::sectionNamed(std::string sectionName)
 {
     return this->sections[sectionName];
 }
 
-SPUTNIK_OBJECT_ITERATOR Sputnik::Sector::objectsNamed(std::string objectName) 
+std::vector<std::map<std::string, std::string>> Sputnik::Sector::objectsNamed(std::string objectName)
 {
-    return this->objects.equal_range(objectName);
+    auto range = this->objects.equal_range(objectName);
+    std::vector<std::map<std::string, std::string>> objects = {};
+    for (auto i = range.first; i != range.second; ++i)
+    {
+        objects.emplace_back(i->second);
+    }
+
+    return objects;
 }
 
 // FILE
@@ -258,9 +265,8 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
                     lineState = Sputnik::LineState::InObject;
 
                     // create a new object and append it
-                    std::map<std::string, std::string> object = {};
-                    sector->objects.emplace(sectionOrObjectName, object);
-                    currentSectionOrObject = &object;
+                    auto object = sector->objects.insert({sectionOrObjectName, {}});
+                    currentSectionOrObject = &object->second;
                 }
 
                 if (kickBackToRoot)
@@ -271,7 +277,7 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
             }
             else if (line.starts_with(';'))
             { // comment
-                // do nothing
+              // do nothing
             }
             else if (line.find("=") != std::string::npos)
             { // key=value line
@@ -284,7 +290,7 @@ Sputnik::ParseStatus Sputnik::File::parseFile(std::string fileName)
                 Sputnik::desanitize(key);
                 Sputnik::desanitize(value);
 
-                // assign key=value 
+                // assign key=value
                 (*currentSectionOrObject)[key] = value;
             }
         }
@@ -313,10 +319,9 @@ std::vector<std::string_view> Sputnik::File::valueAsArray(std::string key, std::
     return Sputnik::splitString(value, ';');
 }
 
-SPUTNIK_OBJECT_ITERATOR Sputnik::File::objectsNamed(std::string key, std::string section = "root", std::string sector = "root") 
+std::vector<std::map<std::string, std::string>> Sputnik::File::objectsNamed(std::string key, std::string section = "root", std::string sector = "root")
 {
     Sputnik::Sector &foundSector = this->sector(sector);
-    SPUTNIK_OBJECT_ITERATOR objectIterator = foundSector.objectsNamed(key);
-    return objectIterator;
+    return foundSector.objectsNamed(key);
 }
 #endif

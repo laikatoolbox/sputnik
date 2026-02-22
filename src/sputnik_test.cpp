@@ -77,6 +77,21 @@ void testKitchenSink() {
 
     // Test objects
     auto circles = spkFile->objectsNamed("circle");
+    // We should have two circles
+    assert(circles.size() == 2);
+    // test values for the first circle
+    auto circle1 = circles[0];
+    assert(circle1["x"] == "0");
+    assert(circle1["y"] == "10");
+    assert(circle1["width"] == "100");
+    assert(circle1["height"] == "100");
+    assert(circle1["fill"] == "black");
+    // test values for the second circle
+    auto circle2 = circles[1];
+    assert(circle2["x"] == "90");
+    assert(circle2["y"] == "90");
+    assert(circle2["width"] == "9000");
+    assert(circle2["height"] == "650");
 
     std::cout << "Kitchen sink test passed" << std::endl;
 }
